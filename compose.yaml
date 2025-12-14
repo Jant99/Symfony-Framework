@@ -33,13 +33,26 @@ services:
         target: 443
         published: ${HTTP3_PORT:-443}
         protocol: udp
+  database:
+    image: postgres:15
+    container_name: app-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
 # Mercure is installed as a Caddy module, prevent the Flex recipe from installing another service
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
 
+
 volumes:
   caddy_data:
   caddy_config:
+  pgdata:
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
