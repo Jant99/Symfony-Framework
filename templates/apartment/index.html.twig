@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mieszkania{% endblock %}
+
+{% block body %}
+<h1>Wyszukiwarka mieszkań</h1>
+
+{# Ostatnie mieszkanie na górze #}
+{% if lastApartment %}
+    <section style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
+        <h2>Ostatnio dodane mieszkanie</h2>
+        <h3>{{ lastApartment.title }}</h3>
+        <p>{{ lastApartment.description }}</p>
+        <p>Cena: {{ lastApartment.price }} PLN | Pokoi: {{ lastApartment.rooms }} | Powierzchnia: {{ lastApartment.area }} m²</p>
+        <p>Adres: {{ lastApartment.address }}</p>
+        <p>Dodano: {{ lastApartment.createdAt|date('Y-m-d H:i') }}</p>
+    </section>
+{% endif %}
+
+{# Formularz wyszukiwarki #}
+<form method="get" action="{{ path('apartment_home') }}">
+    <label for="maxPrice">Maksymalna cena:</label>
+    <input type="number" name="maxPrice" id="maxPrice" value="{{ maxPrice | default(0) }}" placeholder="np. 3000">
+
+    <label for="rooms">Liczba pokoi:</label>
+    <input type="number" name="rooms" id="rooms" value="{{ rooms | default(0)}}" placeholder="np. 2">
+
+    <button type="submit">Szukaj</button>
+</form>
+
+{# Menu pod wyszukiwarką #}
+<nav>
+    <a href="{{ path('apartment_home') }}">Wszystkie mieszkania</a>
+   
+</nav>
+
+{# Wyniki wyszukiwania #}
+<section>
+    <h2>Wyniki:</h2>
+
+    {% if apartments is empty %}
+        <p>Brak mieszkań spełniających kryteria.</p>
+    {% else %}
+        {% for apt in apartments %}
+            <div class="apartment">
+                <h3>{{ apt.title }}</h3>
+                <p>{{ apt.description }}</p>
+                <p>Cena: {{ apt.price }} PLN | Pokoi: {{ apt.rooms }} | Powierzchnia: {{ apt.area }} m²</p>
+                <p>Adres: {{ apt.address }}</p>
+                <p>Dodano: {{ apt.createdAt|date('Y-m-d H:i') }}</p>
+            </div>
+            <hr>
+        {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

@@ -34,4 +34,37 @@ class ApartmentProvider
     {
         return $this->apartmentRepository->find($id);
     }
+
+    public function search(?int $maxPrice, ?int $rooms): array
+{
+    $qb = $this->apartmentRepository->createQueryBuilder('a');
+
+    if ($maxPrice !== null) {
+        $qb->andWhere('a.price <= :maxPrice')
+           ->setParameter('maxPrice', $maxPrice);
+    }
+
+    if ($rooms !== null) {
+        $qb->andWhere('a.rooms = :rooms')
+           ->setParameter('rooms', $rooms);
+    }
+
+    $qb->orderBy('a.createdAt', 'DESC');
+
+    return $qb->getQuery()->getResult();
+}
+
+/**
+ * Zwraca ostatnio dodane mieszkanie
+ */
+public function getLastApartment(): ?Apartment
+{
+    return $this->apartmentRepository->createQueryBuilder('a')
+        ->orderBy('a.createdAt', 'DESC')
+        ->setMaxResults(1)
+        ->getQuery()
+        ->getOneOrNullResult();
+}
+
+
 }

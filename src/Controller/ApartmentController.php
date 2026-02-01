@@ -3,52 +3,53 @@
 namespace App\Controller;
 
 use App\Service\ApartmentProvider;
+use App\Service\SettingProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ApartmentController extends AbstractController
 {
     private ApartmentProvider $apartmentProvider;
-
+    private SettingProvider $settingProvider;
     // Wstrzyknięcie serwisu w konstruktorze
-    public function __construct(ApartmentProvider $apartmentProvider)
+    public function __construct(ApartmentProvider $apartmentProvider, SettingProvider $settingProvider)
     {
         $this->apartmentProvider = $apartmentProvider;
+        $this->settingProvider = $settingProvider;
     }
 
-    #[Route('/api/apartments', name: 'apartment_index', methods: ['GET'])]
-    public function index(): JsonResponse
+    #[Route('/', name: 'apartment_home', methods: ['GET'])]
+    public function index(Request $request): Response
     {
-        // Pobranie mieszkań z serwisu
-        $apartments = $this->apartmentProvider->getAllApartments();
+        // Pobranie parametrów wyszukiwarki z query string
+        $maxPrice = $request->query->getInt('maxPrice', 0);
+        $rooms = $request->query->getInt('rooms', 0);
 
-        // Zabezpieczenie: jeśli null lub pusta tablica
-        if ($apartments === null || empty($apartments)) {
-            return $this->json([
-                'status' => 'error',
-                'message' => 'Brak mieszkań w bazie'
-            ], Response::HTTP_NOT_FOUND);
-        }
+        $maxPriceFilter = $maxPrice > 0 ? $maxPrice : null;
+        $roomsFilter    = $rooms > 0 ? $rooms : null;
 
-        // Mapowanie danych do JSON (unikamy pustych obiektów)
-        $data = array_map(fn($apartment) => [
-            'id' => $apartment->getId(),
-            'title' => $apartment->getTitle(),
-            'description' => $apartment->getDescription(),
-            'price' => $apartment->getPrice(),
-            'rooms' => $apartment->getRooms(),
-            'area' => $apartment->getArea(),
-            'address' => $apartment->getAddress(),
-            'createdAt' => $apartment->getCreatedAt()->format('Y-m-d H:i:s'),
-        ], $apartments);
+        // Pobranie mieszkań zgodnie z filtrami
+        $apartments = $this->apartmentProvider->search($maxPriceFilter, $roomsFilter);
 
-        //  Zwracamy JSON i zabezpieczamy API (tylko JSON)
-        return $this->json([
-            'status' => 'success',
-            'count' => count($data),
-            'data' => $data
+        // Pobranie ostatniego mieszkania
+        $lastApartment = $this->apartmentProvider->getLastApartment();
+
+        // Pobranie ustawien
+        $siteName = $this->settingProvider->get('site_name', 'Domyslna nazwa strona');
+        
+        return $this->render('apartment/index.html.twig', [
+            
+            'apartments' => $apartments,
+            'lastApartment' => $lastApartment,
+            'maxPrice' => $maxPrice,
+            'rooms' => $rooms,
         ]);
     }
+
+    
+
+    
 }
+
