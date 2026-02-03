@@ -41,6 +41,7 @@ class ApartmentController extends AbstractController
         
         return $this->render('apartment/index.html.twig', [
             
+            'site_name' => 'Apartments App',
             'apartments' => $apartments,
             'lastApartment' => $lastApartment,
             'maxPrice' => $maxPrice,
