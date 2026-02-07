@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Apartment;
+use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -17,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 class ApartmentGenerateCommand extends Command
 {
-    public function __construct(private EntityManagerInterface $em)
+    public function __construct(private EntityManagerInterface $em, private CategoryRepository $category_repository)
     {
         parent::__construct();
     }
@@ -25,6 +26,14 @@ class ApartmentGenerateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+
+        $category = $this->category_repository->findOneBy([]);
+
+        if (!$category){
+            $output->writeln('<error>No category found. Run fixtures first.</error>');
+            return Command::FAILURE;
+        }
+
         $apartment = new Apartment();
         $apartment->setTitle('Apartment #' . random_int(100, 999));
         $apartment->setPrice(random_int(1500, 6000));
@@ -34,6 +43,7 @@ class ApartmentGenerateCommand extends Command
         $apartment->setDescription('Generated automatically');
         $apartment->setCreatedAt(new \DateTimeImmutable());
 
+        $apartment->setCategory($category);
         $this->em->persist($apartment);
         $this->em->flush();
 

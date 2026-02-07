@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\Apartment;
+use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -18,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 )]
 class ApartmentAddCommand extends Command
 {
-    public function __construct(private EntityManagerInterface $em)
+    public function __construct(private EntityManagerInterface $em, private CategoryRepository $category_repository)
     {
         parent::__construct();
     }
@@ -33,6 +34,13 @@ class ApartmentAddCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+
+        $category = $this->category_repository->findOneBy([]);
+
+        if (!$category){
+            $output->writeln('<error>No category found. Run fixtures first.</error>');
+            return Command::FAILURE;
+        }
         $apartment = new Apartment();
         $apartment->setTitle($input->getArgument('title'));
         $apartment->setPrice((float)$input->getArgument('price'));
@@ -42,6 +50,7 @@ class ApartmentAddCommand extends Command
         $apartment->setDescription('Added via command');
         $apartment->setCreatedAt(new \DateTimeImmutable());
 
+        $apartment->setCategory($category);
         $this->em->persist($apartment);
         $this->em->flush();
 
